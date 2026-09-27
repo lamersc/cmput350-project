@@ -179,40 +179,63 @@ struct Rect {
         : topLeft(center.x - radius, center.y - radius), width(2 * radius), height(2 * radius) {}
 
     Rect &operator|=(const Rect &other) {
-        // TODO: write this code
+        float left = std::min(topLeft.x, other.topLeft.x);
+        float top = std::min(topLeft.y, other.topLeft.y);
+        float right = std::max(topLeft.x + width, other.topLeft.x + other.width);
+        float bottom = std::max(topLeft.y + height, other.topLeft.y + other.height);
+        topLeft = Point2D(left, top);
+        width = right - left;
+        height = bottom - top;
         return *this;
     }
     Rect &operator|=(const Point2D &other) {
-        // TODO: write this code
+        float left = std::min(topLeft.x, other.x);
+        float top = std::min(topLeft.y, other.y);
+        float right = std::max(topLeft.x + width, other.x);
+        float bottom = std::max(topLeft.y + height, other.y);
+        topLeft = Point2D(left, top);
+        width = right - left;
+        height = bottom - top;
         return *this;
     }
     Rect &operator|=(const Line &other) {
-        // TODO: write this code
+        *this |= other.p1;
+        *this |= other.p2;
         return *this;
     }
     Rect &operator&=(const Rect &other) {
-        // TODO: write this code
+        float left = std::max(topLeft.x, other.topLeft.x);
+        float top = std::max(topLeft.y, other.topLeft.y);
+        float right = std::min(topLeft.x + width, other.topLeft.x + other.width);
+        float bottom = std::min(topLeft.y + height, other.topLeft.y + other.height);
+        topLeft = Point2D(left, top);
+        width = std::max(0.0f, right - left);
+        height = std::max(0.0f, bottom - top);
         return *this;
     }
     Rect &operator+=(const Point2D &other) {
-        // TODO: write this code
+        topLeft += other;
         return *this;
     }
     Rect operator+(const Point2D &other) const {
-        // TODO: write this code
-        return *this;
+        Rect copy = *this;
+        copy += other;
+        return copy;
     }
     void Inset(int inset) {
-        // TODO: write this code
+        topLeft.x += inset;
+        topLeft.y += inset;
+        width -= 2 * inset;
+        height -= 2 * inset;
     }
     bool IsInside(const Point2D &p) const {
-        // TODO: write this code
-        return false;
+        return p.x >= topLeft.x && p.x <= topLeft.x + width &&
+               p.y >= topLeft.y && p.y <= topLeft.y + height;
     }
 };
 
 static std::ostream &operator<<(std::ostream &os, const Rect &l) {
-    // TODO: write this code
+    os << "Rect(" << l.topLeft << ", " << l.width << ", " << l.height << ")";
     return os;
 }
 
