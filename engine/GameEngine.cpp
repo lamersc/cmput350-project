@@ -7,7 +7,7 @@
 namespace CMPUT350 {
 #include "FontData.h"
 
-GameEngine::GameEngine(unsigned int width, unsigned int height, const std::string& name) : mGameContext(new GameContext()) {
+GameEngine::GameEngine(unsigned int width, unsigned int height, const std::string& name) {
     if (!mFont->openFromMemory(&_font, _font_len))
     {
     	fprintf(stderr, "WARNING: Font did not load.\n");
@@ -16,6 +16,9 @@ GameEngine::GameEngine(unsigned int width, unsigned int height, const std::strin
     mWindow = std::make_shared<sf::RenderWindow>(
         sf::RenderWindow(sf::VideoMode(
             sf::Vector2u(width, height)), name));
+
+    mGameContext.mEngineView = this;
+    mGameContext.ScreenContext = new DrawContext(mWindow, mFont);
 }
 
 GameEngine::~GameEngine() {
@@ -50,7 +53,7 @@ void GameEngine::Run() {
         // 1. Activate and initialize any objects added during the last frame
         for (const std::shared_ptr<GameObject>& pendingGameObject : mPendingObjects) {
             if (pendingGameObject) {
-                pendingGameObject->Initialize(mGameContext);
+                pendingGameObject->Initialize(&mGameContext);
             }
             mGameObjects.push_back(pendingGameObject);
         }
@@ -62,7 +65,7 @@ void GameEngine::Run() {
                 if (std::islower(keyPressed->unicode)) {
                     for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
                         if (GameObject* gameObject = gameObjectPtr.get()) {
-                            gameObject->HandleKeyEvent(mGameContext, keyPressed->unicode);
+                            gameObject->HandleKeyEvent(&mGameContext, keyPressed->unicode);
                         }
                     }
                 }
@@ -72,7 +75,7 @@ void GameEngine::Run() {
         // 3. Update game objects
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             if (GameObject* gameObject = gameObjectPtr.get()) {
-                gameObject->Update(mGameContext);
+                gameObject->Update(&mGameContext);
             }
         }
 
@@ -94,7 +97,7 @@ void GameEngine::Run() {
         // 5. Late updates
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             if (GameObject* gameObject = gameObjectPtr.get()) {
-                gameObject->LateUpdate(mGameContext);
+                gameObject->LateUpdate(&mGameContext);
             }
         }
 
@@ -105,7 +108,7 @@ void GameEngine::Run() {
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             std::shared_ptr<GraphicsObject> graphicsObject = std::dynamic_pointer_cast<GraphicsObject>(gameObjectPtr);
             if (graphicsObject) {
-                graphicsObject->RenderBackground(mGameContext);
+                graphicsObject->RenderBackground(&mGameContext);
             }
         }
 
@@ -113,7 +116,7 @@ void GameEngine::Run() {
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             std::shared_ptr<GraphicsObject> graphicsObject = std::dynamic_pointer_cast<GraphicsObject>(gameObjectPtr);
             if (graphicsObject) {
-                graphicsObject->RenderForeground(mGameContext);
+                graphicsObject->RenderForeground(&mGameContext);
             }
         }
 

@@ -1,6 +1,7 @@
 
 #ifndef GAMEENGINE_H
 #define GAMEENGINE_H
+#include "GameContext.h"
 
 namespace CMPUT350 {
 class GameEngine;
@@ -31,7 +32,7 @@ public:
     void Run();
 
 private:
-    GameContext* mGameContext;
+    GameContext mGameContext;
     std::vector<std::shared_ptr<GameObject>> mPendingObjects;
     std::vector<std::shared_ptr<GameObject>> mGameObjects;
     std::shared_ptr<sf::RenderWindow> mWindow;
