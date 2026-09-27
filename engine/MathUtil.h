@@ -124,13 +124,17 @@ struct Line {
         // https://en.wikipedia.org/wiki/Cross_product#Algebraic_properties
         float lhsB = Point2D::Cross(p1Diff, offset1);
         float rhsB = Point2D::Cross(offset2, offset1);
-
         if (rhsB == 0)
-            // answer is undefined
             return false;
 
         float b = lhsB / rhsB;
-        float a = Point2D::Cross(other.p1 - p1, offset2) / Point2D::Cross(offset1, offset2);
+
+        float lhsA = Point2D::Cross(offset1, offset2);
+        float rhsA = Point2D::Cross(other.p1 - p1, offset2);
+        if (lhsA == 0)
+            return false;
+
+        float a = rhsA / lhsA;
 
         if (a < 0 || a > 1 || b < 0 || b > 1)
             // lines meet at point outside of our segment range
@@ -143,7 +147,7 @@ struct Line {
 };
 
 static std::ostream &operator<<(std::ostream &os, const Line &l) {
-    // TODO: write this code
+    os << "Line(" << l.p1 << ", " << l.p2 << ")";
     return os;
 }
 
