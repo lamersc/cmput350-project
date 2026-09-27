@@ -99,8 +99,46 @@ struct Line {
         return p1Distance < p2Distance ? p1 : p2;
     }
     bool Crosses(Line other, Point2D &crossingPoint) const {
+        // (Chris) I want to note this thinking isn't completely original, and
+        // I am likely heavily influenced by the answer at:
+        // https://stackoverflow.com/a/3838357
+        //
+        // While I do like the more efficient answer they have on the site, I have
+        // yet to build an intuitive understanding of that answer, and so wanted
+        // to implement something I could explain
 
-        return false;
+        // (Chris) note I don't check for the case where two lines perfectly overlap with
+        // an infinite number of points
+
+        // (Chris) now my high level understanding of this problem is
+        // if the lines do intersect, we'll have two equations with a shared
+        // point U, such that the intersection of the two is defined as:
+        // p1 + ɑ*(p2 - p1) = other.p1 + b*(other.p2 - other.p1), where a, b ∈ [0, 1].
+        // p1 - other.p1 = b*(other.p2 - other.p1) - ɑ*(p2 - p1)
+
+        Point2D offset1 = p2 - p1;
+        Point2D offset2 = other.p2 - other.p1;
+        Point2D p1Diff = p1 - other.p1;
+        // p1Diff = b*(offset2) - ɑ*(offset1)
+        // take the cross product with offset1 on both sides now to cancel:
+        // https://en.wikipedia.org/wiki/Cross_product#Algebraic_properties
+        float lhsB = Point2D::Cross(p1Diff, offset1);
+        float rhsB = Point2D::Cross(offset2, offset1);
+
+        if (rhsB == 0)
+            // answer is undefined
+            return false;
+
+        float b = lhsB / rhsB;
+        float a = Point2D::Cross(other.p1 - p1, offset2) / Point2D::Cross(offset1, offset2);
+
+        if (a < 0 || a > 1 || b < 0 || b > 1)
+            // lines meet at point outside of our segment range
+            return false;
+
+        crossingPoint = p1 + a * offset1;
+
+        return true;
     }
 };
 
