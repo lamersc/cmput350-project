@@ -9,7 +9,17 @@ class GameContext;
 
 class GraphicsObject : public GameObject {
 public:
+    /**
+     * @brief Renders the background layer of the object.
+     * @param context Pointer to the game context.
+     * @return No return value.
+     */
     virtual void RenderBackground(GameContext *context);
+    /**
+     * @brief Renders the foreground layer of the object.
+     * @param context Pointer to the game context.
+     * @return No return value.
+     */
     virtual void RenderForeground(GameContext *context);
 };
 

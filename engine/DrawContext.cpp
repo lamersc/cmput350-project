@@ -2,9 +2,23 @@
 
 namespace CMPUT350 {
 
+/**
+ * @brief Creates a draw context for the given window and font.
+ * @param window Shared pointer to the render window.
+ * @param font Shared pointer to the font.
+ * @return No return value.
+ */
 DrawContext::DrawContext(std::shared_ptr<sf::RenderWindow> window, std::shared_ptr<sf::Font> font)
     : mWindow(window), mFont(font) {}
 
+/**
+ * @brief Draws text centered at the given position.
+ * @param text Text to draw.
+ * @param pixelSize Character size in pixels.
+ * @param p Center position of the text.
+ * @param c Text color.
+ * @return No return value.
+ */
 void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point2D p, RGBColor c) {
     sf::Text textObject(*mFont, text);
     textObject.setLineAlignment(sf::Text::LineAlignment::Center);
@@ -16,6 +30,14 @@ void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point
     mWindow->draw(textObject);
 }
 
+/**
+ * @brief Draws text with the top-left corner at the given position.
+ * @param text Text to draw.
+ * @param pixelSize Character size in pixels.
+ * @param p Top-left position of the text.
+ * @param c Text color.
+ * @return No return value.
+ */
 void DrawContext::DrawText(const std::string &text, int pixelSize, Point2D p, RGBColor c) {
     sf::Text textObject(*mFont, text);
     textObject.setCharacterSize(pixelSize);
@@ -24,6 +46,13 @@ void DrawContext::DrawText(const std::string &text, int pixelSize, Point2D p, RG
     mWindow->draw(textObject);
 }
 
+/**
+ * @brief Draws a filled circle.
+ * @param p Center position of the circle.
+ * @param radius Circle radius in pixels.
+ * @param c Fill color.
+ * @return No return value.
+ */
 void DrawContext::DrawCircle(Point2D p, float radius, RGBColor c) {
     sf::CircleShape circle(radius);
     circle.setOrigin({radius, radius});
@@ -32,6 +61,12 @@ void DrawContext::DrawCircle(Point2D p, float radius, RGBColor c) {
     mWindow->draw(circle);
 }
 
+/**
+ * @brief Draws a filled rectangle.
+ * @param r Rectangle position and size.
+ * @param c Fill color.
+ * @return No return value.
+ */
 void DrawContext::DrawRect(Rect r, RGBColor c) {
     sf::RectangleShape rect({r.width, r.height});
     rect.setPosition({r.topLeft.x, r.topLeft.y  });
@@ -39,6 +74,13 @@ void DrawContext::DrawRect(Rect r, RGBColor c) {
     mWindow->draw(rect);
 }
 
+/**
+ * @brief Draws a rectangle outline.
+ * @param r Rectangle position and size.
+ * @param width Outline thickness in pixels.
+ * @param c Outline color.
+ * @return No return value.
+ */
 void DrawContext::FrameRect(Rect r, float width, RGBColor c) {
     sf::RectangleShape rect({r.width, r.height});
     rect.setPosition({r.topLeft.x, r.topLeft.y  });
@@ -49,19 +91,17 @@ void DrawContext::FrameRect(Rect r, float width, RGBColor c) {
 }
 
 /**
- * @brief Draws a line between two points with a specified width and color.
- *
- * @param from The starting point of the line (Point2D).
- * @param to The ending point of the line (Point2D).
- * @param width The width of the line in pixels.
- * @param c The color of the line, specified as an RGBColor object.
- *
- * This function calculates the distance and angle between the two points
- * and uses a polygone shape to represent the line. The line is drawn
- * relative to the world offset and rendered onto the associated window.
+ * @brief Draws a thick line between two points.
+ * @param from Start position of the line.
+ * @param to End position of the line.
+ * @param width Line thickness in pixels.
+ * @param c Line color.
+ * @return No return value.
+ * @details The method builds a four-corner polygon around the center line.
  */
 void DrawContext::DrawLine(Point2D from, Point2D to, float width, RGBColor c) {
     sf::ConvexShape convex;
+    // A perpendicular vector with half-width length gives the polygon edges.
     Point2D perpendicular_slope(to.y - from.y, -(to.x - from.x));
     perpendicular_slope.Normalize();
     perpendicular_slope *= width / 2;
@@ -81,8 +121,18 @@ void DrawContext::DrawLine(Point2D from, Point2D to, float width, RGBColor c) {
     mWindow->draw(convex);
 }
 
+/**
+ * @brief Gets the current window width.
+ * @param None.
+ * @return Window width in pixels.
+ */
 int DrawContext::GetWindowWidth() { return mWindow->getSize().x; }
 
+/**
+ * @brief Gets the current window height.
+ * @param None.
+ * @return Window height in pixels.
+ */
 int DrawContext::GetWindowHeight() { return mWindow->getSize().y; }
 
 }  // namespace CMPUT350

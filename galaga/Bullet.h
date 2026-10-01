@@ -10,7 +10,6 @@ public:
     Bullet(CMPUT350::Point2D location, CMPUT350::Point2D heading, bool player);
     bool IsPlayerBullet();
 
-    // GameObject Functions
     void Initialize(CMPUT350::GameContext* context) override;
     void Update(CMPUT350::GameContext* context) override;
     void LateUpdate(CMPUT350::GameContext* context) override;
@@ -18,12 +17,18 @@ public:
     bool IsAlive() const override;
     void Kill() override;
 
-    // Graphics Object Functions
     void RenderBackground(CMPUT350::GameContext* context) override;
     void RenderForeground(CMPUT350::GameContext* context) override;
 
-    // Collision Object Functions
-    void CollisionEnter(const std::shared_ptr<CMPUT350::CollisionObject>& obj) override;
+    void CollisionEnter(const std::shared_ptr<CollisionObject>& obj) override;
     const CMPUT350::Rect& GetBounds() override;
+
+private:
+    CMPUT350::Point2D mLocation;
+    CMPUT350::Point2D mPreviousLocation;
+    CMPUT350::Point2D mDirection;
+    CMPUT350::Rect mBounds;
+    bool mPlayerBullet;
+    bool mAlive;
 };
-#endif // BULLET_H
+#endif  // BULLET_H
