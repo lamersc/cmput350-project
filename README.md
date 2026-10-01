@@ -2,11 +2,11 @@
 
 
 ## Human note (Chris)
-Who would've thought the llm would fail to put its chat history properly in a readme?
+Who would've thought the llm would fail to put its chat history properly in a readme?  
 ^ This is sarcasm.
 
-I pasted my only prompt for this project, as it was 7pm and I'm sick, so I was feeling
-too exhausted to trying the documentation 😅.
+I pasted my only prompt for this project, as it was 7pm and I'm sick, and so am feeling
+too exhausted to write the documentation 😅.
 ```
 Muse Code 1.4.1                                                                 
                                                                                   
