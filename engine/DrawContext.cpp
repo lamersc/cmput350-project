@@ -1,6 +1,9 @@
 #include "DrawContext.h"
+#include <numbers>
 
 namespace CMPUT350 {
+
+constexpr float radsToDegs = 180.0f / std::numbers::pi;
 
 /**
  * @brief Creates a draw context for the given window and font.
@@ -25,7 +28,9 @@ void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point
     textObject.setCharacterSize(pixelSize);
     const auto bounds = textObject.getLocalBounds();
     textObject.setOrigin({bounds.position.x + bounds.size.x / 2.0f, bounds.position.y + bounds.size.y / 2.0f});
-    textObject.setPosition({p.x, p.y});
+    const Point2D screenPos = Transform(p);
+    textObject.setPosition({screenPos.x, screenPos.y});
+    textObject.setRotation(sf::degrees(mRotation * radsToDegs));
     textObject.setFillColor({c.r, c.g, c.b});
     mWindow->draw(textObject);
 }
@@ -41,7 +46,9 @@ void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point
 void DrawContext::DrawText(const std::string &text, int pixelSize, Point2D p, RGBColor c) {
     sf::Text textObject(*mFont, text);
     textObject.setCharacterSize(pixelSize);
-    textObject.setPosition({p.x, p.y});
+    const Point2D screenPos = Transform(p);
+    textObject.setPosition({screenPos.x, screenPos.y});
+    textObject.setRotation(sf::degrees(mRotation * radsToDegs));
     textObject.setFillColor({c.r, c.g, c.b});
     mWindow->draw(textObject);
 }
@@ -56,7 +63,8 @@ void DrawContext::DrawText(const std::string &text, int pixelSize, Point2D p, RG
 void DrawContext::DrawCircle(Point2D p, float radius, RGBColor c) {
     sf::CircleShape circle(radius);
     circle.setOrigin({radius, radius});
-    circle.setPosition({p.x, p.y});
+    const Point2D screenPos = Transform(p);
+    circle.setPosition({screenPos.x, screenPos.y});
     circle.setFillColor({c.r, c.g, c.b});
     mWindow->draw(circle);
 }
@@ -69,7 +77,9 @@ void DrawContext::DrawCircle(Point2D p, float radius, RGBColor c) {
  */
 void DrawContext::DrawRect(Rect r, RGBColor c) {
     sf::RectangleShape rect({r.width, r.height});
-    rect.setPosition({r.topLeft.x, r.topLeft.y  });
+    const Point2D screenPos = Transform(r.topLeft);
+    rect.setPosition({screenPos.x, screenPos.y});
+    rect.setRotation(sf::degrees(mRotation * radsToDegs));
     rect.setFillColor({c.r, c.g, c.b});
     mWindow->draw(rect);
 }
@@ -83,7 +93,9 @@ void DrawContext::DrawRect(Rect r, RGBColor c) {
  */
 void DrawContext::FrameRect(Rect r, float width, RGBColor c) {
     sf::RectangleShape rect({r.width, r.height});
-    rect.setPosition({r.topLeft.x, r.topLeft.y  });
+    const Point2D screenPos = Transform(r.topLeft);
+    rect.setPosition({screenPos.x, screenPos.y});
+    rect.setRotation(sf::degrees(mRotation * radsToDegs));
     rect.setFillColor(sf::Color::Transparent);
     rect.setOutlineThickness(width);
     rect.setOutlineColor({c.r, c.g, c.b});
@@ -101,15 +113,17 @@ void DrawContext::FrameRect(Rect r, float width, RGBColor c) {
  */
 void DrawContext::DrawLine(Point2D from, Point2D to, float width, RGBColor c) {
     sf::ConvexShape convex;
+    const Point2D screenFrom = Transform(from);
+    const Point2D screenTo = Transform(to);
     // A perpendicular vector with half-width length gives the polygon edges.
-    Point2D perpendicular_slope(to.y - from.y, -(to.x - from.x));
+    Point2D perpendicular_slope(screenTo.y - screenFrom.y, -(screenTo.x - screenFrom.x));
     perpendicular_slope.Normalize();
     perpendicular_slope *= width / 2;
 
-    Point2D corner1 = from + perpendicular_slope;
-    Point2D corner2 = from - perpendicular_slope;
-    Point2D corner3 = to - perpendicular_slope;
-    Point2D corner4 = to + perpendicular_slope;
+    Point2D corner1 = screenFrom + perpendicular_slope;
+    Point2D corner2 = screenFrom - perpendicular_slope;
+    Point2D corner3 = screenTo - perpendicular_slope;
+    Point2D corner4 = screenTo + perpendicular_slope;
     convex.setPointCount(4);
     convex.setPoint(0, {corner1.x, corner1.y});
     convex.setPoint(1, {corner2.x, corner2.y});
@@ -134,5 +148,34 @@ int DrawContext::GetWindowWidth() { return mWindow->getSize().x; }
  * @return Window height in pixels.
  */
 int DrawContext::GetWindowHeight() { return mWindow->getSize().y; }
+
+
+void DrawContext::SetContextOffset(Point2D p) { mOffset = p; }
+
+void DrawContext::SetContextRotation(float rotation) {
+    mRotation = rotation;
+    const float cosine = std::cos(rotation);
+    const float sine = std::sin(rotation);
+    mTransform = sf::Transform(cosine, -sine, 0.0f, sine, cosine, 0.0f, 0.0f, 0.0f, 1.0f);
+    mInverseTransform = sf::Transform(cosine, sine, 0.0f, -sine, cosine, 0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+Point2D DrawContext::Transform(Point2D p) {
+    const sf::Vector2f rotated = mTransform.transformPoint({p.x, p.y});
+    return Point2D(rotated.x + mOffset.x, rotated.y + mOffset.y);
+}
+
+Point2D DrawContext::ReverseTransform(Point2D p) {
+    const sf::Vector2f local = mInverseTransform.transformPoint({p.x - mOffset.x, p.y - mOffset.y});
+    return Point2D(local.x, local.y);
+}
+
+Rect DrawContext::Transform(Rect r) {
+    const Point2D topLeft = r.topLeft;
+    Rect bounds(Transform(topLeft), Transform(topLeft + Point2D(r.width, 0.0f)));
+    bounds |= Transform(topLeft + Point2D(0.0f, r.height));
+    bounds |= Transform(topLeft + Point2D(r.width, r.height));
+    return bounds;
+}
 
 }  // namespace CMPUT350
