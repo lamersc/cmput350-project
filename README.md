@@ -1,5 +1,8 @@
 # CMPUT 350 HW 1
 
+## 1a readme
+<details>
+    <summary>Click to expand / collapse 1a readme</summary>
 
 ## Human note (Chris)
 Who would've thought the llm would fail to put its chat history properly in a readme?  
@@ -1013,3 +1016,48 @@ Muse Code 1.4.1
   summary comments for this task. Tars requests that the user reviews the changes 
   and provides feedback.
 ```
+
+</details>
+
+<details>
+    <summary>Click to expand / collapse 1b readme</summary>
+
+# AI disclosures for 1b
+
+====Citation====
+User: How can I get the derivative from this function [@Bezier.cpp (12:24)](file:///Users/lamersc/Documents/uAlberta/CMPUT350/cmput350-project/engine/Bezier.cpp#L12:24)
+
+```
+The clean trick with de Casteljau (which this is): the derivative falls out of the same loop if you stop **one level early**. The two points remaining at the second-to-last level, `tmp[1] - tmp[0]`, are parallel to the tangent, and scaling by the degree `n` gives exactly `B'(t)`.
+
+Let me check your `Point2D` operators and `Line::Tween` so the code matches:
+
+The existing `GetSlope` doesn't even compile — `p2` is undefined; it looks like a half-written finite difference. Let me check `Line::Tween` and `Point2D`'s operators:
+
+The picture is clear now. `GetSlope` is currently a broken stub (`p2` is undefined), and `Line::Tween` is the `a + (b-a)*t` form. The de Casteljau structure gives you the derivative for free: **stop the reduction loop one level early** — the two remaining points' difference, scaled by the degree, is exactly `B'(t)`.
+
+Let me verify that identity numerically before touching your file:
+
+The identity checks out at every `t`. Now I'll replace the broken `GetSlope` stub in `engine/Bezier.cpp`:
+
+Compiles clean (the two warnings are pre-existing unused `operator<<` in `MathUtil.h`, unrelated to this change).
+
+**How it works.** Your `GetPoint` is de Casteljau's algorithm, and its final step is `B(t) = Tween(A, B, t)` between the last two surviving points. The derivative identity is:
+
+```
+B'(t) = n · (B - A)    where n = degree = pts.size() - 1
+```
+
+So `GetSlope` runs the exact same reduction but stops when two points remain, and returns their difference scaled by the degree — no finite differencing, no sampling at `t + 0.01` (which is what the old stub appeared to be attempting; it also referenced an undefined `p2`, so it couldn't compile).
+
+Changes to `engine/Bezier.cpp`:
+- Degree-1 case (`pts.size() == 2`) returns `pts[1] - pts[0]` early, since the loop would leave only one point.
+- Degree 2+ reuses your `Line::Tween` loop, with `while (tmp.size() > 2)` instead of `> 1`.
+- Result: `(tmp[1] - tmp[0]) * float(pts.size() - 1)`.
+
+I verified the identity numerically against the analytic cubic derivative (`3(1-t)²(P1-P0) + 6(1-t)t(P2-P1) + 3t²(P3-P2)`) — exact match at t = 0, 0.25, 0.5, 0.75, 1.
+
+One note: this returns the unnormalized tangent (magnitude varies with speed along the curve, and is 0 at a cusp). If you want the direction only, call `Normalize()` on a copy and guard against near-zero length.
+```
+
+</details>
