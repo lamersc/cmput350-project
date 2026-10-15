@@ -5,6 +5,8 @@
 *.ko
 *.elf
 
+.cache/
+
 # Linker output
 *.ilk
 *.map
