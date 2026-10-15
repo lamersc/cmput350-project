@@ -279,6 +279,10 @@ struct Line {
 
         return true;
     }
+
+    static Point2D Tween(const Point2D &a, const Point2D &b, float t) {
+        return a + (b - a) * t;
+    }
 };
 
 /**
