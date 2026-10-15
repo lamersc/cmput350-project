@@ -1,6 +1,7 @@
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
 
+#include <string>
 namespace CMPUT350 {
 
 class GameContext;
@@ -56,6 +57,8 @@ public:
      * @return No return value.
      */
     virtual void Kill();
+
+    virtual void ReceiveNotification(const std::string& key);
 };
 
 }  // namespace CMPUT350
