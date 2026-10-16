@@ -22,28 +22,22 @@ void NotifyKey(NotificationManager* manager,
 }
 
 bool CollideLineCircle(const Line& line, const Circle& circle, Point2D& collisionPoint) {
+    const float r2 = circle.radius * circle.radius;
     const Point2D f = line.p1 - circle.center;
-    if (f.x * f.x + f.y * f.y <= circle.radius * circle.radius) {
-        // then collision is inside the circle
+    if (f.Dot(f) <= r2) {
         collisionPoint = line.p1;
         return true;
     }
-    const Point2D d = line.p2 - line.p1;
-    const float a = d.Dot(d);
-    if (a <= 0.0f) {
+    const Point2D closest = line.ClosestPoint(circle.center) - circle.center;
+    if (closest.Dot(closest) > r2) {
         return false;
     }
-    const float b = 2.0f * f.Dot(d);
-    const float c = f.Dot(f) - circle.radius * circle.radius;
-    const float discriminant = b * b - 4.0f * a * c;
-    if (discriminant < 0.0f) {
-        return false;
-    }
-    const float t = (-b - std::sqrt(discriminant)) / (2.0f * a);
-    if (t < 0.0f || t > 1.0f) {
-        return false;
-    }
-    collisionPoint = Line::Tween(line.p1, line.p2, t);
+    const Point2D diff = line.p2 - line.p1;
+    const float t = (circle.center - line.p1).Dot(diff) / diff.Dot(diff);
+    const Point2D foot = line.p1 + t * diff;
+    const Point2D h = foot - circle.center;
+    const float halfChord = std::sqrt(r2 - h.Dot(h));
+    collisionPoint = foot - diff * (halfChord / line.Length());
     return true;
 }
 

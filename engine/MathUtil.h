@@ -1,6 +1,7 @@
 #ifndef MATHUTIL_H
 #define MATHUTIL_H
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 
@@ -218,14 +219,15 @@ struct Line {
         return sqrt(pow(p2.x - p1.x, 2) + pow(p2.y - p1.y, 2));
     }
     /**
-     * @brief Finds the nearer endpoint to point p.
+     * @brief Finds the closest point on this segment to point p.
      * @param p Query point.
-     * @return Copy of p1 or p2, whichever is nearer.
+     * @return closest point when trying to project p onto the line
      */
     Point2D ClosestPoint(const Point2D &p) const {
-        double p1Distance = p1.Distance(p);
-        double p2Distance = p2.Distance(p);
-        return p1Distance < p2Distance ? p1 : p2;
+        const Point2D segOffset = p2 - p1;
+        const float segLenSquared = segOffset.x * segOffset.x + segOffset.y * segOffset.y;
+        const float proj = std::clamp((p - p1).Dot(segOffset) / segLenSquared, 0.0f, 1.0f);
+        return p1 + proj * segOffset;
     }
     /**
      * @brief Tests if this segment crosses a different segment.
