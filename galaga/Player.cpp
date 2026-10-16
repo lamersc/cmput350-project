@@ -11,8 +11,9 @@ namespace
 constexpr float playerWidth = 40.0f;
 constexpr float playerHeight = 40.0f;
 constexpr float heldSpeed = 6.0f;
-constexpr float bulletSpeed = 14.0f;
+constexpr float bulletSpeed = 24.0f;
 constexpr int fireCooldown = 12;
+constexpr int maxPlayerBullets = 2;
 }  // namespace
 
 Player::Player(CMPUT350::Point2D loc)
@@ -184,8 +185,27 @@ void Player::Move(float distance)
 
 void Player::Fire(CMPUT350::GameContext* context)
 {
+    if (ActivePlayerBullets(context) >= maxPlayerBullets)
+    {
+        return;
+    }
     const CMPUT350::Point2D bulletStart(mLocation.x, mLocation.y - playerHeight / 2.0f);
     const CMPUT350::Point2D bulletHeading(0, -bulletSpeed);
     context->mEngineView->AddGameObject(
         std::make_shared<Bullet>(bulletStart, bulletHeading, true, mSelf));
+}
+
+int Player::ActivePlayerBullets(CMPUT350::GameContext* context)
+{
+    int count = 0;
+    for (auto it = context->mEngineView->begin(); it != context->mEngineView->end(); ++it)
+    {
+        std::shared_ptr<Bullet> bullet = std::dynamic_pointer_cast<Bullet>(*it);
+        if (bullet != nullptr && bullet->IsAlive() && !bullet->IsDestroyed() &&
+            bullet->IsPlayerBullet())
+        {
+            count++;
+        }
+    }
+    return count;
 }

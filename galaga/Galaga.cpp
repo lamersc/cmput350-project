@@ -21,6 +21,7 @@ constexpr int gameOverFrames = 240;
 constexpr int attackInterval = 150;
 constexpr int maxAttackers = 2;
 constexpr int respawnDelay = 45;
+constexpr int coinsToStart = 5;
 constexpr float playerBottomMargin = 200.0f;
 }  // namespace
 
@@ -203,9 +204,9 @@ void Galaga::ReceiveNotification(const std::string& key)
     }
     else if (key == "StartGame")
     {
-        if (mState == kWaiting && mCredits > 0)
+        if (mState == kWaiting && mCredits >= coinsToStart)
         {
-            mCredits--;
+            mCredits -= coinsToStart;
             StartGame();
         }
     }

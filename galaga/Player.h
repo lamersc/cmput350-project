@@ -31,6 +31,7 @@ private:
     void UpdateBounds();
     void Move(float distance);
     void Fire(CMPUT350::GameContext* context);
+    int ActivePlayerBullets(CMPUT350::GameContext* context);
 
     CMPUT350::Point2D mLocation;
     CMPUT350::Rect mBounds;
