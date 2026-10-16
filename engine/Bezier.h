@@ -3,6 +3,8 @@
 
 #include "MathUtil.h"
 
+#include <vector>
+
 namespace CMPUT350 {
 
 
