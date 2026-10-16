@@ -304,14 +304,15 @@ void GameEngine::Run() {
         std::swap(mGameObjects, aliveObjects);
 
         // 1. Activate pending objects. Deferred activation keeps the main list stable.
-        for (const std::shared_ptr<GameObject>& pendingGameObject : mPendingObjects) {
+        std::vector<std::shared_ptr<GameObject>> pending;
+        pending.swap(mPendingObjects);
+        for (const std::shared_ptr<GameObject>& pendingGameObject : pending) {
             if (pendingGameObject) {
                 mGameContext.CurrObject = pendingGameObject;
                 pendingGameObject->Initialize(&mGameContext);
             }
             mGameObjects.push_back(pendingGameObject);
         }
-        mPendingObjects.clear();
 
         // 2. Process events. key presses and releases send a notification via the notification manager (if its registered)
         while (const std::optional<sf::Event> event = mWindow->pollEvent()) {
