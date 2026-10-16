@@ -1,102 +1,147 @@
 #include "Player.h"
 
-#include <SFML/Window/Keyboard.hpp>
+#include <string>
 
 #include "Bullet.h"
+#include "Enemy.h"
+#include "GameContext.h"
 
 namespace
 {
-constexpr int playerWidth = 40;
-constexpr int playerHeight = 40;
+constexpr float playerWidth = 40.0f;
+constexpr float playerHeight = 40.0f;
 constexpr float heldSpeed = 6.0f;
 constexpr float bulletSpeed = 14.0f;
+constexpr int fireCooldown = 12;
 }  // namespace
 
 Player::Player(CMPUT350::Point2D loc)
     : mLocation(loc),
-      mAlive(true)
+      mAlive(true),
+      mActive(true),
+      mLeft(false),
+      mRight(false),
+      mFireCooldown(0),
+      mWindowWidth(768)
 {
+    mShapes.push_back(CMPUT350::Shape(
+        CMPUT350::Rect(-playerWidth / 2.0f, -playerHeight / 2.0f, playerWidth, playerHeight)));
     UpdateBounds();
 }
 
 void Player::Initialize(CMPUT350::GameContext* context)
 {
+    mSelf = context->CurrObject;
+    mContext = context;
+    CMPUT350::NotificationManager* manager = context->mNotificationManager;
+    manager->Register(mSelf, "LeftDown");
+    manager->Register(mSelf, "LeftUp");
+    manager->Register(mSelf, "RightDown");
+    manager->Register(mSelf, "RightUp");
+    manager->Register(mSelf, "FireDown");
+    manager->Register(mSelf, "PausePlayer");
+    manager->Register(mSelf, "ResumePlayer");
 }
 
 void Player::Update(CMPUT350::GameContext* context)
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+    if (mFireCooldown > 0)
     {
-        Move(-heldSpeed);
+        mFireCooldown--;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-    {
-        Move(heldSpeed);
-    }
-}
-
-void Player::LateUpdate(CMPUT350::GameContext* context)
-{
-
     mWindowWidth = context->ScreenContext->GetWindowWidth();
-}
-
-bool Player::HandleKeyEvent(CMPUT350::GameContext* context, char key)
-{
-    if (key == ' ')
+    if (mActive)
     {
-        Fire(context);
-        return true;
+        if (mLeft)
+        {
+            Move(-heldSpeed);
+        }
+        if (mRight)
+        {
+            Move(heldSpeed);
+        }
     }
-    return false;
 }
 
-void Player::RenderBackground(CMPUT350::GameContext* context)
+void Player::ReceiveNotification(const std::string& key)
 {
+    if (key == "LeftDown")
+    {
+        mLeft = true;
+    }
+    else if (key == "LeftUp")
+    {
+        mLeft = false;
+    }
+    else if (key == "RightDown")
+    {
+        mRight = true;
+    }
+    else if (key == "RightUp")
+    {
+        mRight = false;
+    }
+    else if (key == "FireDown")
+    {
+        if (mActive && mFireCooldown <= 0)
+        {
+            Fire(mContext);
+            mFireCooldown = fireCooldown;
+        }
+    }
+    else if (key == "PausePlayer")
+    {
+        mActive = false;
+    }
+    else if (key == "ResumePlayer")
+    {
+        mActive = true;
+    }
 }
 
 void Player::RenderForeground(CMPUT350::GameContext* context)
 {
-    float centerX = mLocation.x;
-    float centerY = mLocation.y;
-    CMPUT350::Point2D nose(centerX, centerY - 20);
-    context->ScreenContext->DrawRect(
-        CMPUT350::Rect(CMPUT350::Point2D(centerX - 4, centerY - 18), 8, 36),
-        CMPUT350::Colors::white);
-    context->ScreenContext->DrawLine(
-        nose, CMPUT350::Point2D(centerX - 4, centerY - 10), 2, CMPUT350::Colors::white);
-    context->ScreenContext->DrawLine(
-        nose, CMPUT350::Point2D(centerX + 4, centerY - 10), 2, CMPUT350::Colors::white);
-    context->ScreenContext->DrawLine(CMPUT350::Point2D(centerX - 4, centerY + 2),
-                                     CMPUT350::Point2D(centerX - 20, centerY + 16),
-                                     4,
+    const CMPUT350::Point2D nose(0, -20);
+    context->ScreenContext->DrawRect(CMPUT350::Rect(CMPUT350::Point2D(-4, -18), 8, 36),
+                                     CMPUT350::Colors::white);
+    context->ScreenContext->DrawLine(nose, CMPUT350::Point2D(-4, -10), 2,
+                                     CMPUT350::Colors::white);
+    context->ScreenContext->DrawLine(nose, CMPUT350::Point2D(4, -10), 2,
+                                     CMPUT350::Colors::white);
+    context->ScreenContext->DrawLine(CMPUT350::Point2D(-4, 2), CMPUT350::Point2D(-20, 16), 4,
                                      CMPUT350::Colors::red);
-    context->ScreenContext->DrawLine(CMPUT350::Point2D(centerX + 4, centerY + 2),
-                                     CMPUT350::Point2D(centerX + 20, centerY + 16),
-                                     4,
+    context->ScreenContext->DrawLine(CMPUT350::Point2D(4, 2), CMPUT350::Point2D(20, 16), 4,
                                      CMPUT350::Colors::red);
-    context->ScreenContext->DrawRect(
-        CMPUT350::Rect(CMPUT350::Point2D(centerX - 8, centerY + 14), 16, 4),
-        CMPUT350::Colors::gray);
-    context->ScreenContext->DrawCircle(
-        CMPUT350::Point2D(centerX, centerY - 6), 3, CMPUT350::Colors::cyan);
+    context->ScreenContext->DrawRect(CMPUT350::Rect(CMPUT350::Point2D(-8, 14), 16, 4),
+                                     CMPUT350::Colors::gray);
+    context->ScreenContext->DrawCircle(CMPUT350::Point2D(0, -6), 3, CMPUT350::Colors::cyan);
 }
 
 void Player::CollisionEnter(const std::shared_ptr<CMPUT350::CollisionObject>& obj)
 {
     std::shared_ptr<Bullet> bullet = std::dynamic_pointer_cast<Bullet>(obj);
-    if (bullet == nullptr
-        || bullet->IsPlayerBullet())
+    if (bullet != nullptr)
     {
+        if (!bullet->IsPlayerBullet() && !bullet->IsDestroyed())
+        {
+            Kill();
+        }
         return;
     }
-    Kill();
-
+    if (std::dynamic_pointer_cast<Enemy>(obj) != nullptr)
+    {
+        Kill();
+    }
 }
 
 void Player::Kill()
 {
+    if (!mAlive)
+    {
+        return;
+    }
     mAlive = false;
+    mContext->mNotificationManager->Notify("PlayerDied");
 }
 
 bool Player::IsAlive() const
@@ -109,46 +154,38 @@ const CMPUT350::Rect& Player::GetBounds()
     return mBounds;
 }
 
-const std::vector<CMPUT350::Shape> &Player::GetShapes()
+const std::vector<CMPUT350::Shape>& Player::GetShapes()
 {
-    return std::vector<CMPUT350::Shape>();
+    return mShapes;
+}
+
+CMPUT350::Point2D Player::GetLocation() const
+{
+    return mLocation;
+}
+
+float Player::GetRotation() const
+{
+    return 0.0f;
 }
 
 void Player::UpdateBounds()
 {
-    mBounds = CMPUT350::Rect(
-        CMPUT350::Point2D(mLocation.x - playerWidth / 2.0f, mLocation.y - playerHeight / 2.0f),
-        playerWidth,
-        playerHeight);
+    mBounds = CMPUT350::Rect(mLocation, playerWidth / 2.0f);
 }
 
 void Player::Move(float distance)
 {
-    mLocation.x += distance;
-    float halfWidth = playerWidth / 2.0f;
-    if (mLocation.x < halfWidth)
-    {
-        mLocation.x = halfWidth;
-    }
-    if (mLocation.x > mWindowWidth - halfWidth)
-    {
-        mLocation.x = mWindowWidth - halfWidth;
-    }
+    const float halfWidth = playerWidth / 2.0f;
+    mLocation.x = std::clamp(mLocation.x + distance, halfWidth,
+                             mWindowWidth - halfWidth);
     UpdateBounds();
 }
 
 void Player::Fire(CMPUT350::GameContext* context)
 {
-    for (int i = 0; i < 2; i++)
-    {
-        if (mBulletSlots[i].expired())
-        {
-            CMPUT350::Point2D bulletTop(mLocation.x, mLocation.y - playerHeight / 2.0f);
-            CMPUT350::Point2D bulletDirection(0, -bulletSpeed);
-            std::shared_ptr<Bullet> bullet = std::make_shared<Bullet>(bulletTop, bulletDirection, true);
-            mBulletSlots[i] = bullet;
-            context->mEngineView->AddGameObject(bullet);
-            return;
-        }
-    }
+    const CMPUT350::Point2D bulletStart(mLocation.x, mLocation.y - playerHeight / 2.0f);
+    const CMPUT350::Point2D bulletHeading(0, -bulletSpeed);
+    context->mEngineView->AddGameObject(
+        std::make_shared<Bullet>(bulletStart, bulletHeading, true, mSelf));
 }

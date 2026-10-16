@@ -1,35 +1,46 @@
 #ifndef BULLET_H
 #define BULLET_H
 
+#include <memory>
+#include <vector>
+
 #include "CollisionObject.h"
-#include "GameContext.h"
 
 class Bullet : public CMPUT350::CollisionObject
 {
 public:
-    Bullet(CMPUT350::Point2D location, CMPUT350::Point2D heading, bool player);
+    Bullet(CMPUT350::Point2D location, CMPUT350::Point2D heading, bool player,
+           std::weak_ptr<CMPUT350::GameObject> parent);
     bool IsPlayerBullet();
+    bool IsDestroyed() const;
 
-    void Initialize(CMPUT350::GameContext* context) override;
     void Update(CMPUT350::GameContext* context) override;
     void LateUpdate(CMPUT350::GameContext* context) override;
-    bool HandleKeyEvent(CMPUT350::GameContext* context, char key) override;
+    void RenderForeground(CMPUT350::GameContext* context) override;
     bool IsAlive() const override;
     void Kill() override;
-
-    void RenderBackground(CMPUT350::GameContext* context) override;
-    void RenderForeground(CMPUT350::GameContext* context) override;
-
-    void CollisionEnter(const std::shared_ptr<CollisionObject>& obj) override;
+    const std::vector<CMPUT350::Shape>& GetShapes() override;
+    void CollisionEnter(const std::shared_ptr<CMPUT350::CollisionObject>& obj) override;
+    void CollisionEnter(const std::shared_ptr<CMPUT350::CollisionObject>& obj,
+                        const CMPUT350::Point2D& collisionPoint) override;
     const CMPUT350::Rect& GetBounds() override;
-    const std::vector<CMPUT350::Shape> &GetShapes() override;
+    CMPUT350::Point2D GetLocation() const override;
+    float GetRotation() const override;
 
 private:
+    void UpdateBounds();
+
     CMPUT350::Point2D mLocation;
     CMPUT350::Point2D mPreviousLocation;
-    CMPUT350::Point2D mDirection;
+    CMPUT350::Point2D mHeading;
+    CMPUT350::Point2D mCollisionPoint;
     CMPUT350::Rect mBounds;
+    std::vector<CMPUT350::Shape> mShapes;
+    std::weak_ptr<CMPUT350::GameObject> mParent;
     bool mPlayerBullet;
     bool mAlive;
+    bool mDestroyed;
+    int mExplodeTimer;
 };
+
 #endif  // BULLET_H
