@@ -177,7 +177,9 @@ void GameEngine::ResolveCollisionPair(const std::shared_ptr<CollisionObject>& a,
     }
     if (a->GetShapes().empty() || b->GetShapes().empty()) {
         // just give the bounding boxes
+        mGameContext.CurrObject = a;
         a->CollisionEnter(b);
+        mGameContext.CurrObject = b;
         b->CollisionEnter(a);
         return;
     }
@@ -206,7 +208,9 @@ void GameEngine::ResolveCollisionPair(const std::shared_ptr<CollisionObject>& a,
                 // collisions want local points to work with (say we want some collision animation and such)
                 const Point2D localPointA = ToLocal(collisionPoint, offsetA, rotationA);
                 const Point2D localPointB = ToLocal(collisionPoint, offsetB, rotationB);
+                mGameContext.CurrObject = a;
                 a->CollisionEnter(b, localPointA);
+                mGameContext.CurrObject = b;
                 b->CollisionEnter(a, localPointB);
                 return;
             }
@@ -308,6 +312,7 @@ void GameEngine::Run() {
         // 1. Activate pending objects. Deferred activation keeps the main list stable.
         for (const std::shared_ptr<GameObject>& pendingGameObject : mPendingObjects) {
             if (pendingGameObject) {
+                mGameContext.CurrObject = pendingGameObject;
                 pendingGameObject->Initialize(&mGameContext);
             }
             mGameObjects.push_back(pendingGameObject);
@@ -333,6 +338,7 @@ void GameEngine::Run() {
         // 3. Update game objects
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             if (GameObject* gameObject = gameObjectPtr.get()) {
+                mGameContext.CurrObject = gameObjectPtr;
                 gameObject->Update(&mGameContext);
             }
         }
@@ -354,6 +360,7 @@ void GameEngine::Run() {
         // 5. Late updates
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             if (GameObject* gameObject = gameObjectPtr.get()) {
+                mGameContext.CurrObject = gameObjectPtr;
                 gameObject->LateUpdate(&mGameContext);
             }
         }
@@ -366,6 +373,7 @@ void GameEngine::Run() {
             std::shared_ptr<GraphicsObject> graphicsObject =
                 std::dynamic_pointer_cast<GraphicsObject>(gameObjectPtr);
             if (graphicsObject) {
+                mGameContext.CurrObject = gameObjectPtr;
                 mGameContext.ScreenContext->SetContextOffset(graphicsObject->GetLocation());
                 mGameContext.ScreenContext->SetContextRotation(graphicsObject->GetRotation());
                 graphicsObject->RenderBackground(&mGameContext);
@@ -377,6 +385,7 @@ void GameEngine::Run() {
             std::shared_ptr<GraphicsObject> graphicsObject =
                 std::dynamic_pointer_cast<GraphicsObject>(gameObjectPtr);
             if (graphicsObject) {
+                mGameContext.CurrObject = gameObjectPtr;
                 mGameContext.ScreenContext->SetContextOffset(graphicsObject->GetLocation());
                 mGameContext.ScreenContext->SetContextRotation(graphicsObject->GetRotation());
                 graphicsObject->RenderForeground(&mGameContext);
@@ -390,6 +399,7 @@ void GameEngine::Run() {
         // 8. Render UI
         for (const std::shared_ptr<GameObject>& gameObjectPtr : mGameObjects) {
             if (GameObject* gameObject = gameObjectPtr.get()) {
+                mGameContext.CurrObject = gameObjectPtr;
                 gameObject->RenderUI(&mGameContext);
             }
         }
