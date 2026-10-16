@@ -39,13 +39,6 @@ public:
      */
     virtual void RenderUI(GameContext *context);
     /**
-     * @brief Handles a key press event.
-     * @param context Pointer to the game context.
-     * @param key Pressed character.
-     * @return True if the object consumes the key. False if not.
-     */
-    virtual bool HandleKeyEvent(GameContext *context, char key);
-    /**
      * @brief Checks if the object remains active.
      * @param None.
      * @return True if the object is alive. False if the engine removes it.

@@ -92,3 +92,8 @@ const CMPUT350::Rect& Bullet::GetBounds()
 {
     return mBounds;
 }
+
+const std::vector<CMPUT350::Shape> &Bullet::GetShapes()
+{
+    return std::vector<CMPUT350::Shape>();
+}

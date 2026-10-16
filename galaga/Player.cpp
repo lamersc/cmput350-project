@@ -109,6 +109,11 @@ const CMPUT350::Rect& Player::GetBounds()
     return mBounds;
 }
 
+const std::vector<CMPUT350::Shape> &Player::GetShapes()
+{
+    return std::vector<CMPUT350::Shape>();
+}
+
 void Player::UpdateBounds()
 {
     mBounds = CMPUT350::Rect(

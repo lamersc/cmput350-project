@@ -22,6 +22,7 @@ public:
 
     void CollisionEnter(const std::shared_ptr<CollisionObject>& obj) override;
     const CMPUT350::Rect& GetBounds() override;
+    const std::vector<CMPUT350::Shape> &GetShapes() override;
 
 private:
     CMPUT350::Point2D mLocation;

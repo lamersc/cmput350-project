@@ -96,6 +96,9 @@ public:
                                                  CMPUT350::Colors::white);
         context->ScreenContext->DrawLine(mLoc, mLoc + mCollisionPoint, mRadius * 0.1f, CMPUT350::Colors::blue);
     }
+    const std::vector<CMPUT350::Shape> &GetShapes() override {
+            return std::vector<CMPUT350::Shape>();
+    };
 
 private:
     static std::random_device rd;

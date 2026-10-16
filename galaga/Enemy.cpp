@@ -1,4 +1,5 @@
 #include "Enemy.h"
+#include <vector>
 
 #include "Bullet.h"
 
@@ -65,6 +66,11 @@ bool Enemy::IsAlive() const
 const CMPUT350::Rect& Enemy::GetBounds()
 {
     return mBounds;
+}
+
+const std::vector<CMPUT350::Shape> &Enemy::GetShapes()
+{
+    return std::vector<CMPUT350::Shape>();
 }
 
 void Enemy::UpdateBounds()

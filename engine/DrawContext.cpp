@@ -1,4 +1,5 @@
 #include "DrawContext.h"
+
 #include <numbers>
 
 namespace CMPUT350 {
@@ -22,12 +23,13 @@ DrawContext::DrawContext(std::shared_ptr<sf::RenderWindow> window, std::shared_p
  * @param c Text color.
  * @return No return value.
  */
-void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point2D p, RGBColor c) {
+void DrawContext::DrawCenteredText(const std::string& text, int pixelSize, Point2D p, RGBColor c) {
     sf::Text textObject(*mFont, text);
     textObject.setLineAlignment(sf::Text::LineAlignment::Center);
     textObject.setCharacterSize(pixelSize);
     const auto bounds = textObject.getLocalBounds();
-    textObject.setOrigin({bounds.position.x + bounds.size.x / 2.0f, bounds.position.y + bounds.size.y / 2.0f});
+    textObject.setOrigin(
+        {bounds.position.x + bounds.size.x / 2.0f, bounds.position.y + bounds.size.y / 2.0f});
     const Point2D screenPos = Transform(p);
     textObject.setPosition({screenPos.x, screenPos.y});
     textObject.setRotation(sf::degrees(mRotation * radsToDegs));
@@ -43,7 +45,7 @@ void DrawContext::DrawCenteredText(const std::string &text, int pixelSize, Point
  * @param c Text color.
  * @return No return value.
  */
-void DrawContext::DrawText(const std::string &text, int pixelSize, Point2D p, RGBColor c) {
+void DrawContext::DrawText(const std::string& text, int pixelSize, Point2D p, RGBColor c) {
     sf::Text textObject(*mFont, text);
     textObject.setCharacterSize(pixelSize);
     const Point2D screenPos = Transform(p);
@@ -148,7 +150,6 @@ int DrawContext::GetWindowWidth() { return mWindow->getSize().x; }
  * @return Window height in pixels.
  */
 int DrawContext::GetWindowHeight() { return mWindow->getSize().y; }
-
 
 void DrawContext::SetContextOffset(Point2D p) { mOffset = p; }
 

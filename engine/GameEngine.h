@@ -7,11 +7,15 @@ namespace CMPUT350 {
 class GameEngine;
 }
 
+#include "CollisionObject.h"
 #include "EngineView.h"
 #include "GameObject.h"
 #include "MathUtil.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace CMPUT350 {
 
@@ -45,6 +49,12 @@ public:
      * @return No return value.
      */
     void AddGameObject(std::shared_ptr<GameObject> gameObject) override;
+    void InstallKeyDownNotification(int key, const std::string &notification) override;
+    void InstallKeyUpNotification(int key, const std::string &notification) override;
+    const_iterator cbegin() const override;
+    const_iterator cend() const override;
+    const_iterator begin() const override;
+    const_iterator end() const override;
 
     /**
      * @brief Runs the main loop until the window closes.
@@ -54,9 +64,16 @@ public:
     void Run();
 
 private:
+    Shape TransformShape(const Shape& shape);
+    void ResolveCollisionPair(const std::shared_ptr<CollisionObject>& a,
+                              const std::shared_ptr<CollisionObject>& b);
+    Point2D ToLocal(Point2D p, Point2D offset, float rotation);
+
     GameContext mGameContext;
     std::vector<std::shared_ptr<GameObject>> mPendingObjects;
     std::vector<std::shared_ptr<GameObject>> mGameObjects;
+    std::unordered_map<int, std::vector<std::string>> mKeyDownNotifications;
+    std::unordered_map<int, std::vector<std::string>> mKeyUpNotifications;
     std::shared_ptr<sf::RenderWindow> mWindow;
     std::shared_ptr<sf::Font> mFont;
 };
