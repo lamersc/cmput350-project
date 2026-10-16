@@ -5,6 +5,7 @@
 
 #include "GameObject.h"
 #include "MathUtil.h"
+#include <memory>
 
 class Enemy;
 class Player;
