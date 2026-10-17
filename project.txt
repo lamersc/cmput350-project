@@ -1,0 +1,143 @@
+Implementation overview
+=======================
+
+This project is a galaga implementation built on top of the game and engine from part 1a. On the engine side I implemented the
+cubic Bezier curves (*had fun implementing the wrong one initially from notes lol*), collision between lines, circles and
+rectangles, with a single collision point for directed lines, and draw contexts that applys each object's offset and rotation
+so every object just draws in its own local space (*helped "click" a lot of the work game engines such as godot do*). The
+EngineView lets objects iterate over everything inside the engine, and keys and general events are registered as notifications
+instead of being broadcast to all objects, e.g. the player listens for "MoveLeft" and "Fire" rather than the basic string
+codes like before. I tried to keep the engine API as close to the spec as possible, though added my own math functions when
+helpful in keeping code tidy.
+
+The Galaga class runs the game as a finite state machine. It starts waiting for coins (using the "MAME" convention), then
+shows the level number, score and player ship during startup. From there, five waves of eight enemies fly in along Bezier
+curves to try and match galaga arcade machines I've played. Once all the enemies have all settled into formation, the game
+enters the gameplay loop, where enemies hover and take turns attacking in rounds, done using the engine's iterator to decide
+attack order. Clearing a wave loops back to startup with the next level. On player death, the game waits for formation to
+settle and then respawns the player with their remaining lives. If the player runs out of lives, a "game over" message is
+shown for a few seconds before they're sent back to the coin screen.
+
+Enemies come in three visually distinct types with different health, point values and attack beziers; Enemy1 has 2=two health
+and changes color as it takes damage, the others have one (wanted to do more with this, but scope creep was getting me.
+Bullets get destroyed on contact, draw a small explosion at the collision point when destroyed, and die along with their
+parent (was too difficult without this). The player is kept in the screen and can only have two bullets shot at a
+time by iterating how many player bullets are currently alive in the world (wow, thinking now, this could've just been a counter...)
+
+Extra credit: I didn't have time (or procrastinated a little lol) so I followed none; nevertheless, I am proud of the game I threw together.
+
+Contributions to project:
+- Christopher Lamers: All code, documentation, and writeups throughout 1a and 1b.
+- Zaima Masaba: None.
+
+AI usage:
+----Project 1a usage / reflections----
+Prompt: "Go through the entire codebase and document all engine functions using code
+documents, above the methods. After, place my question and your full response in
+the README.md. Format it so it is easily readable by the TA, and note that your
+backing model is "muse-spark-1.3" running on max effort. At the very end of the
+README, put an ascii image of the robot from interstellar named "Tars" using a
+markdown code block."
+Reflection (from Project 1a in readme.md): "Who would've thought the llm would fail to put its chat history properly in a readme?
+^ This is sarcasm.
+
+I pasted my only prompt for this project, as it was 7pm and I'm sick, and so am feeling
+too exhausted to write the documentation 😅."
+
+----Project 1b usage / reflections----
+Code completions: For this part, I decided to experiment using the Zed editors "Zeta" completions.
+It's hard to explain the scope of this feature in how it helped given it takes no specific prompts,
+but instead tries to complete code when the LSP has no suggestions, though it did significant completions
+when e.g. setting up the state machine in `Galaga.cpp`, defining notification handling logic in code, and
+more. While I want to feel like code in this sections were going to be written by me the exact same without
+the completions, its hard to not wonder if the completions bias my thinking to feeling like I was going
+to do it that exact way when really I wasn't. I will note when it did a completion on ~line 207 in
+`Galaga.cpp`, I stupidly let it complete an invalid `coinsToStart` condition and decrement without
+thinking much; this has left me more cautious with how I use and proofread these completions.
+
+prompt: "Go through the entirety of this project and check for any spec deviations from @Project1b.md . If you find any, let me know but don't make any edits"
+(note, `Project1b.md` was just the google doc download as a markdown file; didn't know this was a thing lol)
+==========================
+==========================
+====LLM RESPONSE START====
+==========================
+==========================
+"I've read every engine and galaga source file plus project.txt, the CMake setup, and git history. The core engine (Bezier, collision API with directed-line collision points, dual draw contexts, iterator, notification manager, key-to-notification events) and the Galaga FSM, waves, enemies, bullets, and player all match the spec closely. I found the following deviations, ordered by how likely they are to cost marks.
+
+Clear deviations
+
+ 1. engine/Keyboard.h is missing. The spec's file list includes Keyboard.h [Provided] in the engine folder, and it was never in this repo's git history. If it was part of the provided starter code, it should be restored.
+ 2. main.cpp adds a Stars object (galaga/main.cpp:11) in addition to the Galaga object. The spec says the main program "should just add the Galaga game object to the engine" and the game "can be started by adding a single Galaga object." Stars could be spawned from Galaga::Initialize instead.
+ 3. Coin/start convention (galaga/Galaga.cpp:19, coinsToStart = 5): pressing 5 inserts one credit, but the game requires 5 credits before 1 will start. The MAME convention the spec names is one coin inserted per press of 5, then 1 starts the game.
+ 4. project.txt AI-usage section for 1b is empty. The file ends right after the ----Project 1b usage---- header with no content. The spec requires disclosing all AI-generated code, the prompts, and a reflection. If no AI was used for 1b code, it should say so explicitly; if any was, it's currently undisclosed. (Related: the spec also asks for AI use to be reported in README.md, which currently only covers 1a.)
+ 5. Engine documentation is incomplete. The spec requires all engine functions to be documented. Bezier.h/.cpp and NotificationManager.h/.cpp have no doc comments at all, and several others lack them: EngineView's Install*/iterator functions, CollisionObject::GetShapes and the 2-arg CollisionEnter, GameObject::ReceiveNotification, GameEngine's Install*/iterator/private helpers, and DrawContext's private transform functions.
+
+Minor API/style deviations
+
+ 6. Line::Crosses signature (engine/MathUtil.h:203): takes Line other by value; the spec declares bool Crosses(const Line &other, Point2D &crossingPoint) const. Functionally identical, but it deviates from the stated API.
+ 7. Mixed tabs and 4-space indentation in EngineView.h, CollisionObject.h, GameObject.h, GraphicsObject.h, and GameContext.h (tab-indented lines at e.g. EngineView.h:22-27 next to space-indented ones), which rubric item 9 touches on style consistency. Also DrawContext.h uses the include guard RENDERTARGET_H, mismatching its filename.
+
+Borderline / judgment calls
+
+ 8. Attacks never happen during the Waves state — ScheduleAttacks is only called in kGamePlay, i.e. after all 40 ships have entered. The spec says "During waves, the Galaga class should select several enemies ... to attack," but the Enemy section says enemies wait until all are on screen; the code follows the latter reading. Worth being ready to defend.
+ 9. The engine always calls the 2-arg CollisionEnter with a computed point, even for circle/rect pairs, where the rubric says there is no single collision point ("a single collision point is provided if appropriate"). Harmless in practice since objects ignore the point unless a line is involved, but strictly it doesn't match "if appropriate."
+
+Everything else checked out: the 5-state FSM, 5 waves of 8 enemies, deterministic attack selection via the engine iterator, constant-speed Bezier traversal, formation hover synced on currentFrame, health-based color change (Enemy1 has 2 HP, others 1), in-formation vs attacking point values, bullet behavior (largest-y collision point, different colors, death with parent, circle at collision point), player clamping, scancode-based key registration, immediate notification delivery, weak-pointer listener cleanup, and bounding-box-then-components collision with each pair compared once."
+==========================
+==========================
+====LLM RESPONSE END====
+==========================
+==========================
+
+prompt: "Fix deviation 5"
+==========================
+==========================
+====LLM RESPONSE START====
+==========================
+==========================
+"I'll add the missing doc comments across the engine files, matching the existing Doxygen-style format used in the codebase. Starting with Bezier.h:
+Edited engine/Bezier.h
+Now NotificationManager.h:
+Edited engine/NotificationManager.h
+Now EngineView.h — the Install* and iterator functions:
+Edited engine/EngineView.h
+Now CollisionObject.h — the point overload of CollisionEnter and GetShapes:
+Edited engine/CollisionObject.h
+Now GameObject.h — ReceiveNotification:
+Edited 2 files
+Now GameEngine.h — the Install*, iterator, and private helper declarations:
+Edited 2 files
+Now the matching definitions in GameEngine.cpp, including the anonymous-namespace collision helpers:
+Edited 10 files
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Edited engine/GameEngine.cpp
+Now the Install* and iterator definitions in GameEngine.cpp:
+Edited engine/GameEngine.cpp
+Finally, the private DrawContext functions in DrawContext.cpp:
+Edited 4 files
+Rebuilding to verify everything still compiles:
+Ran cd /Users/lamersc/Documents/uAlberta/CMPUT350/cmput350-project/build && make -j8 2>&1 | tail -8
+All engine functions are now documented, and the build passes. What was added, matching the existing Doxygen @brief/@param/@return style:
+
+• engine/Bezier.h — class-level doc plus docs on the constructor, instance GetPoint/GetSlope, and both static overloads, covering the segment/t range contract (k*3+1 points, 0 ≤ t ≤ k).
+• engine/NotificationManager.h — class doc plus Register, Unregister, Notify, including the weak-pointer/liveness behavior.
+• engine/EngineView.h — InstallKeyDownNotification, InstallKeyUpNotification, the const_iterator alias, and all four iterator functions. This edit also replaced the tab-indented lines with the file's space style.
+• engine/CollisionObject.h — the 2-arg CollisionEnter (documenting that the point is first contact in local space) and GetShapes; tabs normalized to spaces here too.
+• engine/GameObject.h / GameObject.cpp — ReceiveNotification documented at both declaration and definition, matching the file's existing duplicate-doc convention.
+• engine/GameEngine.h / GameEngine.cpp — docs for Install*, the four iterators, the private helpers TransformShape/ResolveCollisionPair/ToLocal, and the seven anonymous-namespace collision routines (NotifyKey, CollideLine*, CollideCircle*, CollideRectRect, CollideShapes).
+• engine/DrawContext.cpp — the private interface: SetContextOffset, SetContextRotation, Transform(Point2D), ReverseTransform, Transform(Rect).
+
+Rebuild of build/ succeeded with no errors or warnings. Deviation 5 is resolved; deviations 1, 2, 3, 4, 6, and 7 from my earlier list remain unaddressed."
+==========================
+==========================
+====LLM RESPONSE END====
+==========================
+==========================

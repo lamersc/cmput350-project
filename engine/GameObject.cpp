@@ -39,5 +39,10 @@ bool GameObject::IsAlive() const { return true; }
  */
 void GameObject::Kill() {}
 
+/**
+ * @brief Receives a notification message the object listens for.
+ * @param key Message key sent through the notification manager.
+ * @return No return value. The default version ignores the message.
+ */
 void GameObject::ReceiveNotification(const std::string& key) { return; }
 }  // namespace CMPUT350

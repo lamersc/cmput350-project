@@ -10,6 +10,13 @@ namespace CMPUT350 {
 
 namespace {
 
+/**
+ * @brief Sends the notifications registered for a key event.
+ * @param manager Notification manager that delivers the messages.
+ * @param notifications Map from key scancode to message keys.
+ * @param key Scancode from the keyboard event.
+ * @return No return value. Unregistered keys are ignored.
+ */
 void NotifyKey(NotificationManager* manager,
                const std::unordered_map<int, std::vector<std::string>>& notifications, int key) {
     const auto entry = notifications.find(key);
@@ -21,6 +28,13 @@ void NotifyKey(NotificationManager* manager,
     }
 }
 
+/**
+ * @brief Finds the first point where a directed line enters a circle.
+ * @param line Directed line segment in world space.
+ * @param circle Circle in world space.
+ * @param collisionPoint Output first contact point.
+ * @return True if the line touches or crosses the circle. False if not.
+ */
 bool CollideLineCircle(const Line& line, const Circle& circle, Point2D& collisionPoint) {
     const float r2 = circle.radius * circle.radius;
     const Point2D f = line.p1 - circle.center;
@@ -41,6 +55,13 @@ bool CollideLineCircle(const Line& line, const Circle& circle, Point2D& collisio
     return true;
 }
 
+/**
+ * @brief Finds the first point where a directed line enters a rectangle.
+ * @param line Directed line segment in world space.
+ * @param rect Axis-aligned rectangle in world space.
+ * @param collisionPoint Output first contact point.
+ * @return True if the line touches or crosses the rectangle. False if not.
+ */
 bool CollideLineRect(const Line& line, const Rect& rect, Point2D& collisionPoint) {
     if (rect.IsInside(line.p1)) {
         collisionPoint = line.p1;
@@ -73,6 +94,13 @@ bool CollideLineRect(const Line& line, const Rect& rect, Point2D& collisionPoint
     return false;
 }
 
+/**
+ * @brief Tests two circles for overlap and picks a representative point.
+ * @param a First circle in world space.
+ * @param b Second circle in world space.
+ * @param collisionPoint Output point between the two centers.
+ * @return True if the circles overlap. False if they are separate.
+ */
 bool CollideCircleCircle(const Circle& a, const Circle& b, Point2D& collisionPoint) {
     const double distance = a.center.Distance(b.center);
     if (distance > a.radius + b.radius) {
@@ -87,6 +115,13 @@ bool CollideCircleCircle(const Circle& a, const Circle& b, Point2D& collisionPoi
     return true;
 }
 
+/**
+ * @brief Tests a circle and rectangle for overlap and picks a point.
+ * @param circle Circle in world space.
+ * @param rect Axis-aligned rectangle in world space.
+ * @param collisionPoint Output rectangle point closest to the circle center.
+ * @return True if the circle overlaps the rectangle. False if not.
+ */
 bool CollideCircleRect(const Circle& circle, const Rect& rect, Point2D& collisionPoint) {
     const Point2D clamped(
         std::clamp(circle.center.x, rect.topLeft.x, rect.topLeft.x + rect.width),
@@ -98,6 +133,13 @@ bool CollideCircleRect(const Circle& circle, const Rect& rect, Point2D& collisio
     return false;
 }
 
+/**
+ * @brief Tests two rectangles for overlap and picks a representative point.
+ * @param a First axis-aligned rectangle in world space.
+ * @param b Second axis-aligned rectangle in world space.
+ * @param collisionPoint Output center of the intersection area.
+ * @return True if the rectangles overlap. False if they are separate.
+ */
 bool CollideRectRect(const Rect& a, const Rect& b, Point2D& collisionPoint) {
     Rect intersection = a;
     intersection &= b;
@@ -109,6 +151,13 @@ bool CollideRectRect(const Rect& a, const Rect& b, Point2D& collisionPoint) {
     return true;
 }
 
+/**
+ * @brief Dispatches one shape pair to the matching collision routine.
+ * @param a First shape in world space.
+ * @param b Second shape in world space.
+ * @param collisionPoint Output contact point for the shape pair.
+ * @return True if the shapes collide. False if they are separate.
+ */
 bool CollideShapes(const Shape& a, const Shape& b, Point2D& collisionPoint) {
     switch (a.t) {
         case ShapeType::kLine:
@@ -147,6 +196,12 @@ bool CollideShapes(const Shape& a, const Shape& b, Point2D& collisionPoint) {
 
 }  // namespace
 
+/**
+ * @brief Moves a collision shape from object local space to world space.
+ * @param shape Shape in local object coordinates.
+ * @return New shape with transformed position. Rectangles become the
+ * bounding box of the rotated rectangle.
+ */
 Shape GameEngine::TransformShape(const Shape& shape) {
     DrawContext* context = mGameContext.ScreenContext;
     switch (shape.t) {
@@ -162,6 +217,14 @@ Shape GameEngine::TransformShape(const Shape& shape) {
     return Shape(Rect());
 }
 
+/**
+ * @brief Tests one unordered pair of collision objects for collisions.
+ * @param a First collision object.
+ * @param b Second collision object.
+ * @return No return value. Overlapping bounds trigger a component shape
+ * check, and each object receives CollisionEnter with a local collision
+ * point when a component pair collides.
+ */
 void GameEngine::ResolveCollisionPair(const std::shared_ptr<CollisionObject>& a,
                                       const std::shared_ptr<CollisionObject>& b) {
     Rect intersection = a->GetBounds();
@@ -212,6 +275,13 @@ void GameEngine::ResolveCollisionPair(const std::shared_ptr<CollisionObject>& a,
     }
 }
 
+/**
+ * @brief Converts a world point into an object's local space.
+ * @param p Point in world coordinates.
+ * @param offset Object location in world coordinates.
+ * @param rotation Object rotation in radians.
+ * @return Point in the object's local coordinate space.
+ */
 Point2D GameEngine::ToLocal(Point2D p, Point2D offset, float rotation) {
     mGameContext.ScreenContext->SetContextOffset(offset);
     mGameContext.ScreenContext->SetContextRotation(rotation);
@@ -264,20 +334,52 @@ void GameEngine::AddGameObject(std::shared_ptr<GameObject> gameObject) {
     mPendingObjects.push_back(gameObject);
 }
 
+/**
+ * @brief Registers a notification to send when a key is pressed down.
+ * @param key Key scancode to watch.
+ * @param notification Message sent to the notification manager on press.
+ * @return No return value. Multiple notifications can share one key.
+ */
 void GameEngine::InstallKeyDownNotification(int key, const std::string& notification) {
     mKeyDownNotifications[key].push_back(notification);
 }
 
+/**
+ * @brief Registers a notification to send when a key is released.
+ * @param key Key scancode to watch.
+ * @param notification Message sent to the notification manager on release.
+ * @return No return value. Multiple notifications can share one key.
+ */
 void GameEngine::InstallKeyUpNotification(int key, const std::string& notification) {
     mKeyUpNotifications[key].push_back(notification);
 }
 
+/**
+ * @brief Gets an iterator to the first object in the engine.
+ * @param None.
+ * @return Constant iterator to the first contained object.
+ */
 GameEngine::const_iterator GameEngine::cbegin() const { return mGameObjects.cbegin(); }
 
+/**
+ * @brief Gets an iterator past the last object in the engine.
+ * @param None.
+ * @return Constant iterator one past the final contained object.
+ */
 GameEngine::const_iterator GameEngine::cend() const { return mGameObjects.cend(); }
 
+/**
+ * @brief Gets an iterator to the first object in the engine.
+ * @param None.
+ * @return Constant iterator to the first contained object.
+ */
 GameEngine::const_iterator GameEngine::begin() const { return mGameObjects.begin(); }
 
+/**
+ * @brief Gets an iterator past the last object in the engine.
+ * @param None.
+ * @return Constant iterator one past the final contained object.
+ */
 GameEngine::const_iterator GameEngine::end() const { return mGameObjects.end(); }
 
 /**

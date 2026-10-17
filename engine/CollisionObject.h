@@ -37,6 +37,12 @@ public:
      */
     virtual void CollisionEnter(const std::shared_ptr<CollisionObject> &obj) = 0;
 
+    /**
+     * @brief Responds to a collision that has a single collision point.
+     * @param obj Shared pointer to the other collision object.
+     * @param collisionPoint First contact point in this object's local space.
+     * @return No return value. The default version ignores the point.
+     */
     virtual void CollisionEnter(const std::shared_ptr<CollisionObject> &obj, const Point2D &collisionPoint) {
         CollisionEnter(obj);
     }
@@ -47,6 +53,12 @@ public:
      */
     virtual const Rect &GetBounds() = 0;
 
+    /**
+     * @brief Gets the internal shapes used for collision tests.
+     * @param None.
+     * @return Constant reference to the shapes in local object space. Shapes
+     * can be lines, circles, or axis-aligned rectangles.
+     */
     virtual const std::vector<Shape> &GetShapes() = 0;
 
 };

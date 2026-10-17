@@ -51,6 +51,11 @@ public:
      */
     virtual void Kill();
 
+    /**
+     * @brief Receives a notification message the object listens for.
+     * @param key Message key sent through the notification manager.
+     * @return No return value. The default version ignores the message.
+     */
     virtual void ReceiveNotification(const std::string& key);
 };
 

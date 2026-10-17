@@ -151,8 +151,19 @@ int DrawContext::GetWindowWidth() { return mWindow->getSize().x; }
  */
 int DrawContext::GetWindowHeight() { return mWindow->getSize().y; }
 
+/**
+ * @brief Sets the world offset added to every transformed point.
+ * @param p Object location in world coordinates.
+ * @return No return value.
+ */
 void DrawContext::SetContextOffset(Point2D p) { mOffset = p; }
 
+/**
+ * @brief Sets the rotation applied to every transformed point.
+ * @param rotation Object rotation in radians.
+ * @return No return value. The forward and inverse transform matrices are
+ * rebuilt from the rotation.
+ */
 void DrawContext::SetContextRotation(float rotation) {
     mRotation = rotation;
     const float cosine = std::cos(rotation);
@@ -161,16 +172,32 @@ void DrawContext::SetContextRotation(float rotation) {
     mInverseTransform = sf::Transform(cosine, sine, 0.0f, -sine, cosine, 0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+/**
+ * @brief Moves a local object point to window space.
+ * @param p Point in local object coordinates.
+ * @return Rotated point plus the current world offset.
+ */
 Point2D DrawContext::Transform(Point2D p) {
     const sf::Vector2f rotated = mTransform.transformPoint({p.x, p.y});
     return Point2D(rotated.x + mOffset.x, rotated.y + mOffset.y);
 }
 
+/**
+ * @brief Moves a window space point back into local object space.
+ * @param p Point in window coordinates.
+ * @return Point after subtracting the world offset and applying the inverse
+ * rotation matrix.
+ */
 Point2D DrawContext::ReverseTransform(Point2D p) {
     const sf::Vector2f local = mInverseTransform.transformPoint({p.x - mOffset.x, p.y - mOffset.y});
     return Point2D(local.x, local.y);
 }
 
+/**
+ * @brief Rotates a rectangle and computes its new axis-aligned bounding box.
+ * @param r Rectangle in local object coordinates.
+ * @return Bounding box of the rectangle after offset and rotation.
+ */
 Rect DrawContext::Transform(Rect r) {
     const Point2D topLeft = r.topLeft;
     Rect bounds(Transform(topLeft), Transform(topLeft + Point2D(r.width, 0.0f)));

@@ -9,19 +9,20 @@
 #include "GameContext.h"
 #include "NotificationManager.h"
 #include "Player.h"
+#include "Stars.h"
 
 namespace
 {
 constexpr int enemiesPerWave = 8;
 constexpr int waveCount = 5;
 constexpr int totalEnemies = enemiesPerWave * waveCount;
-constexpr int spawnInterval = 4;
-constexpr int startupFrames = 90;
+constexpr int spawnInterval = 1;
+constexpr int startupFrames = 20;
 constexpr int gameOverFrames = 240;
 constexpr int attackInterval = 150;
-constexpr int maxAttackers = 2;
+constexpr int maxAttackers = 3;
 constexpr int respawnDelay = 45;
-constexpr int coinsToStart = 5;
+constexpr int coinsToStart = 1;
 constexpr float playerBottomMargin = 200.0f;
 }  // namespace
 
@@ -79,6 +80,9 @@ void Galaga::Initialize(CMPUT350::GameContext* context)
     manager->Register(context->CurrObject, "StartGame");
     manager->Register(context->CurrObject, "EnemyDied");
     manager->Register(context->CurrObject, "PlayerDied");
+
+    context->mEngineView->AddGameObject(
+        std::make_shared<Stars>(250, CMPUT350::Rect(0, 0, mWidth, mHeight)));
 }
 
 void Galaga::Update(CMPUT350::GameContext* context)
